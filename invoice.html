@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="robots" content="noindex,nofollow">
+<link rel="icon" type="image/png" href="icon.png">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>فاتورة مبيعات - المجد للتجارة والتوزيع</title>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
@@ -57,20 +58,20 @@ details.hist{margin-top:14px}details.hist summary{cursor:pointer;font-weight:700
 #toast{position:fixed;bottom:18px;left:50%;transform:translateX(-50%);background:#14263d;color:#fff;padding:10px 18px;border-radius:10px;z-index:200;font-weight:700;max-width:90vw;text-align:center}
 .banner{background:#fff3cd;border:1px solid #e6c35c;color:#6b4e0a;border-radius:8px;padding:8px 10px;margin-bottom:10px;font-size:13px;font-weight:700}
 /* بوابة الدخول */
-#gate{position:fixed;inset:0;background:var(--bg);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px}
+#gate{position:fixed;top:0;right:0;bottom:0;left:0;background:var(--bg);z-index:100;display:flex;align-items:center;justify-content:center;padding:16px}
 .gcard{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:22px;width:100%;max-width:380px;display:grid;gap:10px;text-align:center}
 .glogo{width:84px;height:84px;object-fit:contain;margin:auto;border-radius:12px}
 .gcard h2{margin:0;font-size:20px}
 .gerr{color:var(--red);font-weight:700;font-size:13px;min-height:18px}
 .linkbtn{background:none;border:0;color:var(--mut);font:inherit;font-size:12.5px;cursor:pointer;text-decoration:underline}
 /* مستندات */
-#ov{position:fixed;inset:0;background:var(--bg);z-index:50;overflow:auto;padding:12px}
+#ov{position:fixed;top:0;right:0;bottom:0;left:0;background:var(--bg);z-index:50;overflow:auto;padding:12px}
 .tb{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px;position:sticky;top:0;z-index:2;background:var(--bg);padding-bottom:6px}
 .tb button{width:auto;padding:9px 16px}
 /* ===== الفاتورة والمستندات ===== */
 .sheet{width:794px;min-height:1123px;background:#fff;color:#14263d;position:relative;display:flex;flex-direction:column;box-shadow:0 6px 28px rgba(0,0,0,.18);margin:auto}
 .sheet.doc{min-height:0}
-.sheet[data-st="canceled"]::after{content:"ملغاة";position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:150px;font-weight:800;color:rgba(192,57,43,.16);transform:rotate(-22deg);pointer-events:none}
+.sheet[data-st="canceled"]::after{content:"ملغاة";position:absolute;top:0;right:0;bottom:0;left:0;display:flex;align-items:center;justify-content:center;font-size:150px;font-weight:800;color:rgba(192,57,43,.16);transform:rotate(-22deg);pointer-events:none}
 .head{background:#14263d;color:#fff;padding:20px 34px;display:flex;justify-content:space-between;align-items:center;border-bottom:5px solid #c28a2c}
 .co h1{margin:0;font-size:31px;font-weight:800;line-height:1.2}
 .co p{margin:4px 0 0;font-size:14px;color:#e6c98f}
@@ -96,9 +97,10 @@ td.nm{text-align:right}
 tr:nth-child(even) td{background:#f8fafc}
 th:first-child,td:first-child{width:40px}
 .bottom{display:flex;gap:18px;margin-top:14px;align-items:flex-start}
-.pol{flex:1;border:1.5px solid #d9e0e8;border-radius:8px;padding:8px 12px;font-size:10px;line-height:1.55}
+.pol{flex:1;border:1.5px solid #d9e0e8;border-radius:8px;padding:10px 14px;font-size:11.5px;line-height:1.7}
 .pol h4{margin:0 0 3px;font-size:12px;color:#14263d}
-.pol ol{margin:0;padding-right:16px;columns:2;column-gap:14px}
+.pol ul{margin:0;padding-right:16px}
+.pol .more{margin-top:6px;color:#6b7b8f;font-size:10.5px}
 .pol li{break-inside:avoid;margin-bottom:2px}
 .pol h5{margin:5px 0 0;font-size:10.5px;color:#14263d}
 .pol p{margin:0}
@@ -471,10 +473,13 @@ function draw(){
   renderAudit();
 }
 function renderPol(){
-  const b=$('pol');if(typeof POLICIES==='undefined'){b.hidden=true;return;}
-  b.textContent='';const h=document.createElement('h4');h.textContent='الشروط والأحكام';b.appendChild(h);
-  const ol=document.createElement('ol');POLICIES.terms.forEach(t=>{const li=document.createElement('li');li.textContent=t;ol.appendChild(li);});b.appendChild(ol);
-  POLICIES.sections.forEach(x=>{const t=document.createElement('h5');t.textContent=x.t;const p=document.createElement('p');p.textContent=x.p;b.append(t,p);});
+  const b=$('pol');if(typeof POLICIES==='undefined'||!POLICIES.brief){b.hidden=true;return;}
+  b.textContent='';
+  const h=document.createElement('h4');h.textContent='أهم الشروط والأحكام';b.appendChild(h);
+  const ul=document.createElement('ul');
+  POLICIES.brief.forEach(x=>{const li=document.createElement('li'),k=document.createElement('b');k.textContent=x.t+': ';li.append(k,document.createTextNode(x.p));ul.appendChild(li);});
+  b.appendChild(ul);
+  const n=document.createElement('p');n.className='more';n.textContent='الشروط والأحكام الكاملة متاحة في صفحة السياسات بموقعنا.';b.appendChild(n);
 }
 function rows(){
   const box=$('rows');box.textContent='';
@@ -841,11 +846,16 @@ function csvParse(t){const rows=[];let row=[],c='',q=false;
     else if(ch==='\n'||ch==='\r'){if(ch==='\r'&&t[i+1]==='\n')i++;row.push(c);rows.push(row);row=[];c='';}
     else c+=ch;}
   if(c||row.length){row.push(c);rows.push(row);}return rows;}
+function expOk(v){v=dg(v||'').trim();if(!v)return true;let t,y,m,d;
+  if((t=v.match(/^(\d{4})[-\/.](\d{1,2})[-\/.](\d{1,2})/))){y=+t[1];m=+t[2];d=+t[3];}
+  else if((t=v.match(/^(\d{1,2})[-\/.](\d{1,2})[-\/.](\d{4})/))){d=+t[1];m=+t[2];y=+t[3];}else return false;
+  const dt=new Date(y,m-1,d,23,59,59);if(isNaN(dt)||dt.getMonth()!==m-1||dt.getDate()!==d)return false;return Date.now()<=dt.getTime();}
 async function loadProducts(){try{
   const res=await fetch(SHEET_URL);if(!res.ok)return;
   const dl=$('plist'),num=v=>parseFloat(dg(v||'').replace(/[^\d.]/g,''))||0;
   csvParse(await res.text()).slice(1).forEach(r=>{const n=(r[1]||'').trim();if(!n)return;
-    [[num(r[2]),'قطعة'],[num(r[6]),'كرتونة']].forEach(([v,u])=>{if(!v)return;const l=n+' — '+u;PMAP[l]=v;const o=document.createElement('option');o.value=l;dl.appendChild(o);});});
+    const live=expOk(r[11]),eff=(reg,off)=>live&&off>0&&off<reg?off:reg;   // سعر العرض إن كان ساريًا
+    [[eff(num(r[2]),num(r[9])),'قطعة'],[eff(num(r[6]),num(r[10])),'كرتونة']].forEach(([v,u])=>{if(!v)return;const l=n+' — '+u;PMAP[l]=v;const o=document.createElement('option');o.value=l;dl.appendChild(o);});});
 }catch(e){}}
 
 /* ===================== القفل التلقائي وبدء التطبيق ===================== */
