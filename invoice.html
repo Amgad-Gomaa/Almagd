@@ -168,6 +168,7 @@ th:first-child,td:first-child{width:40px}
  <label for="shop">اسم المحل أو النشاط</label><input id="shop">
  <label for="cn">اسم العميل</label><input id="cn">
  <label for="addr">العنوان</label><input id="addr">
+ <label for="nt">ملاحظات الطلب</label><input id="nt">
  <label for="ph">رقم الهاتف</label><input id="ph" type="tel" inputmode="tel" dir="ltr" style="text-align:right">
  <h3>الأصناف</h3>
  <div id="rows"></div>
@@ -276,6 +277,7 @@ th:first-child,td:first-child{width:40px}
     <div><span>اسم العميل</span><b id="vCn"></b></div>
     <div><span>العنوان</span><b id="vAddr"></b></div>
     <div><span>رقم الهاتف</span><b id="vPh" dir="ltr" style="text-align:right"></b></div>
+    <div id="vNtBox" style="grid-column:1/-1"><span>ملاحظات</span><b id="vNt"></b></div>
    </div>
   </div>
   <table>
@@ -458,7 +460,7 @@ function stamp(){issued=new Date();const d=issued,p=x=>String(x).padStart(2,'0')
   $('vDate').textContent=d.getFullYear()+'/'+p(d.getMonth()+1)+'/'+p(d.getDate());
   let h=d.getHours(),ap=h>=12?'م':'ص';h=h%12||12;$('vTime').textContent=p(h)+':'+p(d.getMinutes())+' '+ap;}
 function draw(){
-  $('vNo').textContent=$('no').value;$('vShop').textContent=$('shop').value;$('vCn').textContent=$('cn').value;$('vAddr').textContent=$('addr').value;$('vPh').textContent=$('ph').value;
+  $('vNo').textContent=$('no').value;$('vShop').textContent=$('shop').value;$('vCn').textContent=$('cn').value;$('vAddr').textContent=$('addr').value;$('vNt').textContent=$('nt').value;$('vNtBox').style.display=$('nt').value.trim()?'':'none';$('vPh').textContent=$('ph').value;
   $('vSt').textContent=ST[cur.status];$('sheet').dataset.st=cur.status;
   const body=$('vRows');body.textContent='';
   const shown=items.filter(i=>i.n||+i.p),total=Math.max(4,shown.length);
@@ -522,13 +524,13 @@ function parseOrder(t){
   t.split(/\n/).forEach(l=>{const m=l.trim().match(/^[•\-\*]\s*(.+?)\s+[—–-]\s+([\d.]+)\s*(قطعة|كرتونة)\s*[×xX]\s*([\d.]+)/);
     if(m)its.push({n:m[1].trim()+' — '+m[3],q:parseFloat(m[2])||1,p:parseFloat(m[4])||0});});
   if(!its.length)return null;
-  const sh=t.match(/(?:التاجر\s*\/?\s*)?المحل\s*:\s*(.+)/),ad=t.match(/العنوان\s*:\s*(.+)/),ph=t.match(/الهاتف\s*:\s*([\d+][\d\s+-]*)/);
-  return{items:its,shop:sh?sh[1].trim():'',addr:ad?ad[1].trim():'',phone:ph?ph[1].trim():''};
+  const sh=t.match(/(?:التاجر\s*\/?\s*)?المحل\s*:\s*(.+)/),ad=t.match(/العنوان\s*:\s*(.+)/),ph=t.match(/الهاتف\s*:\s*([\d+][\d\s+-]*)/),ar=t.match(/المنطقة\s*:\s*(.+)/),nt=t.match(/ملاحظات\s*:\s*(.+)/);
+  return{items:its,shop:sh?sh[1].trim():'',addr:ad?ad[1].trim():'',area:ar?ar[1].trim():'',notes:nt?nt[1].trim():'',phone:ph?ph[1].trim():''};
 }
 $('imp').onclick=()=>{
   const o=parseOrder(dg($('paste').value));
   if(o){
-    if(o.shop)$('shop').value=o.shop;if(o.addr)$('addr').value=o.addr;
+    if(o.shop)$('shop').value=o.shop;if(o.addr)$('addr').value=(o.area&&!o.addr.includes(o.area)?o.area+' - ':'')+o.addr;if(o.notes)$('nt').value=o.notes;
     if(o.phone){$('ph').value=o.phone;autoPrev();}
     if(items.length===1&&!items[0].n&&!items[0].p)items=[];
     items=items.concat(o.items);$('paste').value='';rows();draw();return;
@@ -546,7 +548,7 @@ $('imp').onclick=()=>{
 $('pf').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{let t;try{t=new TextDecoder('utf-8',{fatal:true}).decode(r.result)}catch(_){t=new TextDecoder('windows-1256').decode(r.result)}$('paste').value=t;$('imp').click();e.target.value='';};r.readAsArrayBuffer(f);};
 function autoPrev(){const k=ck();$('prev').value=k?(balanceOf(k,$('no').value)||0):0;draw();}
 $('ph').addEventListener('change',autoPrev);
-['no','shop','cn','addr','ph','disc','prev'].forEach(i=>$(i).addEventListener('input',draw));
+['no','shop','cn','addr','nt','ph','disc','prev'].forEach(i=>$(i).addEventListener('input',draw));
 $('add').onclick=()=>{items.push({n:'',q:1,p:0});rows();draw();};
 $('addp').onclick=()=>{pays.push({m:'نقدي',a:0});payRows();draw();};
 
@@ -558,12 +560,12 @@ async function save(){
   const old=DB.hist.find(h=>h.no===no);
   if(old&&loadedNo!==no){toast('رقم الفاتورة '+no+' مستخدم مسبقاً. غيّره أو افتح الفاتورة من السجل.');return false;}
   const now=Date.now();
-  const rec={no,ts:old?old.ts:now,upd:now,k,shop:$('shop').value,cn:$('cn').value,addr:$('addr').value,ph:$('ph').value,
+  const rec={no,ts:old?old.ts:now,upd:now,k,shop:$('shop').value,cn:$('cn').value,addr:$('addr').value,nt:$('nt').value,ph:$('ph').value,
     items:items.map(i=>({...i})),disc:+$('disc').value||0,pays:pays.map(p=>({...p})),prev:+$('prev').value||0,
     date:$('vDate').textContent,time:$('vTime').textContent,tot:t.tot,bal:t.due,status:cur.status,approvedAt:cur.approvedAt||null,reason:cur.reason||'',
     log:cur.log.map(x=>({...x}))};
   if(old){
-    const sg=h=>JSON.stringify([h.shop,h.cn,h.addr,h.ph,h.items,h.disc,h.prev]),pg=h=>JSON.stringify(h.pays);
+    const sg=h=>JSON.stringify([h.shop,h.cn,h.addr,h.nt||'',h.ph,h.items,h.disc,h.prev]),pg=h=>JSON.stringify(h.pays);
     if(stOf(old)!=='new'){
       if(sg(old)!==sg(rec))rec.log.push({ts:now,a:'تعديل',n:cur.editReason||''});
       if(pg(old)!==pg(rec))rec.log.push({ts:now,a:'تحديث الدفعات',n:fmt(paidOf(rec))});
@@ -615,7 +617,7 @@ $('bCn').onclick=async()=>{
   if(!(await save())){applyLock();draw();}
 };
 function resetForm(){
-  ['shop','cn','addr','ph','paste'].forEach(i=>$(i).value='');$('disc').value=0;$('prev').value=0;
+  ['shop','cn','addr','nt','ph','paste'].forEach(i=>$(i).value='');$('disc').value=0;$('prev').value=0;
   pays=[{m:'نقدي',a:0}];items=[{n:'',q:1,p:0}];cur={status:'new',log:[],unlocked:false};loadedNo=null;
   payRows();$('no').value=makeNo();stamp();rows();applyLock();draw();
 }
@@ -625,7 +627,7 @@ $('wa').onclick=async()=>{await save();const n=waNumber();window.open('https://w
 $('pr').onclick=async()=>{await save();document.body.classList.remove('po');window.print();};
 $('lock').onclick=()=>lockNow();
 function openRec(h){
-  $('no').value=h.no;$('shop').value=h.shop;$('cn').value=h.cn;$('addr').value=h.addr;$('ph').value=h.ph;
+  $('no').value=h.no;$('shop').value=h.shop;$('cn').value=h.cn;$('addr').value=h.addr;$('nt').value=h.nt||'';$('ph').value=h.ph;
   items=h.items.length?h.items.map(i=>({...i})):[{n:'',q:1,p:0}];$('disc').value=h.disc;pays=h.pays.map(p=>({...p}));$('prev').value=h.prev;
   cur={status:stOf(h),log:(h.log||[]).map(x=>({...x})),unlocked:false,approvedAt:h.approvedAt,reason:h.reason};loadedNo=h.no;
   $('vDate').textContent=h.date;$('vTime').textContent=h.time;rows();payRows();applyLock();draw();$('stage').scrollIntoView({behavior:'smooth'});
